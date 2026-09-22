@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "express-validator": "^7.1.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0"
+  },
+  "description": "Arogya Seva Maharashtra \u2014 integrated rural healthcare access platform API (Problem Statement 26133)",
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "main": "src/server.js",
+  "name": "arogya-seva-mh-backend",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "seed": "node src/db/seed.js",
+    "start": "node src/server.js"
+  },
+  "version": "1.0.0"
+}

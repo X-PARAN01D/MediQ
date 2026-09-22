@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Arogya Seva Maharashtra — integrated rural healthcare access platform" />
+  <title>Arogya Seva Maharashtra</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: "#effaf8", 100: "#d7f0ec", 200: "#b0e0d9", 300: "#7fc9bf",
+              400: "#4dada1", 500: "#2a9187", 600: "#0d7a6f", 700: "#0b655c",
+              800: "#084f48", 900: "#063f3a"
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d7a6f'/%3E%3Cpath d='M16 7v18M7 16h18' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+</head>
+<body class="min-h-screen">
+
+  <!-- Connectivity / mode banners -->
+  <div id="offline-banner" style="display:none" class="bg-red-700 text-white text-center text-sm font-bold py-1.5 px-3">
+    📡 <span data-i18n="offline_queued">Offline — your entry is queued and will sync when reconnected.</span>
+  </div>
+  <div id="demo-banner" style="display:none" class="bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-xs sm:text-sm py-1.5 px-3"></div>
+
+  <!-- Top bar -->
+  <header id="topbar" class="topbar text-white sticky top-0 z-50 shadow">
+    <div class="max-w-7xl mx-auto flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-14">
+      <button id="hamburger" class="lg:hidden text-2xl leading-none p-1" aria-label="Menu">☰</button>
+      <a href="#/dashboard" class="flex items-center gap-2 shrink-0">
+        <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="#ffffff" opacity="0.18"/>
+          <path d="M16 7v18M7 16h18" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <span class="leading-tight">
+          <span class="block font-extrabold text-base sm:text-lg" data-i18n="app_name">Arogya Seva</span>
+          <span class="hidden sm:block text-[11px] opacity-80 font-semibold" data-i18n="tagline">Maharashtra Rural Health Access</span>
+        </span>
+      </a>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-1 bg-white/10 rounded-lg p-0.5" role="group" aria-label="Language">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="hi">हिं</button>
+        <button class="lang-btn" data-lang="mr">म</button>
+      </div>
+      <a href="#/emergency" class="btn btn-danger btn-sm no-print" title="Emergency">🆘 <span data-i18n="sos">SOS</span></a>
+      <div class="user-area flex items-center gap-2">
+        <div id="user-chip" class="flex items-center gap-2"></div>
+        <button id="logout-btn" class="btn btn-sm bg-white/15 hover:bg-white/25 text-white border border-white/20" title="Logout">⏻ <span class="hidden sm:inline" data-i18n="logout">Logout</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div id="sidebar-overlay"></div>
+
+  <div class="max-w-7xl mx-auto flex items-start gap-4 px-3 sm:px-4 py-4">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-60 shrink-0 bg-white rounded-2xl shadow border border-slate-100 p-3 lg:sticky lg:top-[4.5rem] max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <nav id="side-nav" class="flex flex-col gap-1" aria-label="Main navigation"></nav>
+      <div class="mt-4 pt-3 border-t border-slate-100">
+        <p class="text-[11px] text-slate-400 font-semibold px-2">Arogya Seva · MH</p>
+        <p class="text-[11px] text-slate-400 px-2">PHC Shirur · v1.0</p>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 min-w-0">
+      <div id="app-root" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <div id="toast-root" aria-live="assertive"></div>
+  <div id="modal-root"></div>
+
+  <!-- i18n + components -->
+  <script src="js/i18n.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/skeleton.js"></script>
+  <script src="js/components/empty-state.js"></script>
+  <script src="js/components/cards.js"></script>
+  <script src="js/components/tables.js"></script>
+  <script src="js/components/forms.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Views -->
+  <script src="js/views/login.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/patients.js"></script>
+  <script src="js/views/appointments.js"></script>
+  <script src="js/views/queue.js"></script>
+  <script src="js/views/triage.js"></script>
+  <script src="js/views/records.js"></script>
+  <script src="js/views/referrals.js"></script>
+  <script src="js/views/diagnostics.js"></script>
+  <script src="js/views/pharmacy.js"></script>
+  <script src="js/views/followups.js"></script>
+  <script src="js/views/teleconsult.js"></script>
+  <script src="js/views/emergency.js"></script>
+  <script src="js/views/facility-dashboard.js"></script>
+  <script src="js/views/admin.js"></script>
+
+  <!-- App core (router, auth, API) — loads last -->
+  <script src="js/app.js"></script>
+</body>
+</html>
