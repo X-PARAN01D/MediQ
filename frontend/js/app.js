@@ -322,7 +322,6 @@ const Api = {
   get: function (p) { return Api.request("GET", p); },
   post: function (p, b) { return Api.request("POST", p, b); },
   put: function (p, b) { return Api.request("PUT", p, b); },
-  patch: function (p, b) { return Api.request("PATCH", p, b); },
   del: function (p) { return Api.request("DELETE", p); },
 
   syncQueue: async function () {

@@ -26,18 +26,7 @@ I18n.addStrings({
     save_url: 'Save',
     url_saved: 'Backend URL updated.',
     confirm_deactivate: 'Deactivate this user?',
-    confirm_activate: 'Activate this user?',
-    tab_verifications: 'Verifications',
-    ver_license: 'Licence No.',
-    ver_speciality: 'Speciality',
-    ver_approve: 'Approve',
-    ver_reject: 'Reject',
-    ver_notes_ph: 'Reviewer notes (optional)',
-    ver_confirm_approve: 'Approve this doctor’s licence?',
-    ver_confirm_reject: 'Reject this doctor’s licence application?',
-    ver_no_pending: 'No pending verifications.',
-    ver_no_pending_msg: 'All doctor licences have been reviewed.',
-    ver_status: 'Verification'
+    confirm_activate: 'Activate this user?'
   },
   hi: {
     admin_title: 'प्रशासन',
@@ -62,18 +51,7 @@ I18n.addStrings({
     save_url: 'सहेजें',
     url_saved: 'बैकएंड URL अपडेट किया गया।',
     confirm_deactivate: 'इस उपयोगकर्ता को निष्क्रिय करें?',
-    confirm_activate: 'इस उपयोगकर्ता को सक्रिय करें?',
-    tab_verifications: 'सत्यापन',
-    ver_license: 'लाइसेंस नं.',
-    ver_speciality: 'विशेषज्ञता',
-    ver_approve: 'स्वीकृत करें',
-    ver_reject: 'अस्वीकृत करें',
-    ver_notes_ph: 'समीक्षक टिप्पणी (वैकल्पिक)',
-    ver_confirm_approve: 'इस डॉक्टर का लाइसेंस स्वीकृत करें?',
-    ver_confirm_reject: 'इस डॉक्टर का लाइसेंस आवेदन अस्वीकृत करें?',
-    ver_no_pending: 'कोई लंबित सत्यापन नहीं।',
-    ver_no_pending_msg: 'सभी डॉक्टर लाइसेंसों की समीक्षा हो चुकी है।',
-    ver_status: 'सत्यापन'
+    confirm_activate: 'इस उपयोगकर्ता को सक्रिय करें?'
   },
   mr: {
     admin_title: 'प्रशासन',
@@ -98,18 +76,7 @@ I18n.addStrings({
     save_url: 'जतन करा',
     url_saved: 'बॅकएंड URL अद्यतनित केला.',
     confirm_deactivate: 'हा वापरकर्ता निष्क्रिय करायचा?',
-    confirm_activate: 'हा वापरकर्ता सक्रिय करायचा?',
-    tab_verifications: 'पडताळणी',
-    ver_license: 'परवाना क्र.',
-    ver_speciality: 'विशेषज्ञता',
-    ver_approve: 'मंजूर करा',
-    ver_reject: 'नाकारा',
-    ver_notes_ph: 'समीक्षक टिप्पणी (पर्यायी)',
-    ver_confirm_approve: 'या डॉक्टरचा परवाना मंजूर करायचा?',
-    ver_confirm_reject: 'या डॉक्टरचा परवाना अर्ज नाकारायचा?',
-    ver_no_pending: 'कोणतीही प्रलंबित पडताळणी नाही.',
-    ver_no_pending_msg: 'सर्व डॉक्टर परवान्यांचे पुनरावलोकन झाले आहे.',
-    ver_status: 'पडताळणी'
+    confirm_activate: 'हा वापरकर्ता सक्रिय करायचा?'
   }
 });
 
@@ -358,108 +325,11 @@ I18n.addStrings({
     });
   }
 
-  /* ---------------- Doctor licence verifications tab ---------------- */
-
-  function canVerify() {
-    try { return Auth.can('facility_admin', 'system_admin'); } catch (e) { return false; }
-  }
-
-  function unwrap(res) {
-    return (res && typeof res === 'object' && 'success' in res) ? res.data : res;
-  }
-
-  function verBadge(st) {
-    var tone = st === 'verified' ? 'bg-green-100 text-green-800'
-      : st === 'rejected' ? 'bg-red-100 text-red-800'
-      : 'bg-amber-100 text-amber-800';
-    return '<span class="inline-block px-2 py-1 rounded-full text-xs font-semibold ' + tone + '">' +
-      esc(I18n.t('ver_status') + ': ' + (st || 'pending')) + '</span>';
-  }
-
-  async function paintVerifications(el, mount) {
-    mount.innerHTML = Skeleton.table();
-
-    var rows = [];
-    try {
-      var res = unwrap(await Api.get('/verifications/pending'));
-      rows = Array.isArray(res) ? res : (res && res.items) || [];
-    } catch (e) {
-      mount.innerHTML =
-        '<div class="rounded-xl bg-red-50 border border-red-200 p-6 text-center">' +
-        '<p class="font-medium text-red-800">' + esc(I18n.t('error_load')) + '</p>' +
-        '<button id="ver-retry" class="btn btn-danger mt-4">' + esc(I18n.t('try_again')) + '</button></div>';
-      var rb = mount.querySelector('#ver-retry');
-      if (rb) rb.addEventListener('click', function () { paintVerifications(el, mount); });
-      return;
-    }
-
-    var header =
-      '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +
-      '<h2 class="text-lg font-bold text-gray-900">' + esc(I18n.t('tab_verifications')) + '</h2>' +
-      '<p class="text-xs text-slate-500">Doctors must be licence-verified before teleconsultations.</p>' +
-      '</div>';
-
-    var body = rows.length
-      ? Tables.render({
-        columns: [
-          { key: 'name', label: I18n.t('name') },
-          { key: 'role', label: I18n.t('role'), render: function (r) { return roleLabel(r.role); } },
-          { key: 'license_no', label: I18n.t('ver_license'), render: function (r) { return '<span class="font-mono text-sm">' + esc(r.license_no || '—') + '</span>'; } },
-          { key: 'speciality', label: I18n.t('ver_speciality'), render: function (r) { return esc(r.speciality || '—'); } },
-          { key: 'facility_name', label: I18n.t('facility'), render: function (r) { return esc(r.facility_name || '—'); } },
-          { key: 'phone', label: I18n.t('phone') },
-          { key: 'verification_status', label: I18n.t('ver_status'), render: function (r) { return verBadge(r.verification_status); } }
-        ],
-        rows: rows,
-        emptyTitle: I18n.t('ver_no_pending'),
-        emptyMessage: I18n.t('ver_no_pending_msg'),
-        actions: [
-          { id: 'approve', label: I18n.t('ver_approve'), kind: 'primary' },
-          { id: 'reject', label: I18n.t('ver_reject'), kind: 'danger' }
-        ]
-      })
-      : EmptyState.render({ icon: '🩺', title: I18n.t('ver_no_pending'), message: I18n.t('ver_no_pending_msg') });
-
-    mount.innerHTML = header + body;
-
-    if (rows.length) {
-      Tables.bindActions(mount, rows, {
-        approve: async function (row) {
-          var ok = await Modal.confirm({
-            title: I18n.t('ver_approve'),
-            message: I18n.t('ver_confirm_approve'),
-            confirmLabel: I18n.t('ver_approve')
-          });
-          if (!ok) return;
-          try {
-            await Api.patch('/verifications/' + encodeURIComponent(row.id || row._id), { status: 'verified' });
-            Toast.success(I18n.t('updated_ok'));
-            paintVerifications(el, mount);
-          } catch (e) { Toast.error(I18n.t('operation_failed')); }
-        },
-        reject: async function (row) {
-          var ok = await Modal.confirm({
-            title: I18n.t('ver_reject'),
-            message: I18n.t('ver_confirm_reject'),
-            confirmLabel: I18n.t('ver_reject')
-          });
-          if (!ok) return;
-          try {
-            await Api.patch('/verifications/' + encodeURIComponent(row.id || row._id), { status: 'rejected' });
-            Toast.success(I18n.t('updated_ok'));
-            paintVerifications(el, mount);
-          } catch (e) { Toast.error(I18n.t('operation_failed')); }
-        }
-      });
-    }
-  }
-
   /* ---------------- Entry ---------------- */
 
   Views.admin = async function (el) {
     document.title = I18n.t('app_name') + ' · ' + I18n.t('admin_title');
     var tab = 'users';
-    var showVerify = canVerify();
 
     function shell() {
       return '<div class="p-4 max-w-7xl mx-auto">' +
@@ -468,11 +338,6 @@ I18n.addStrings({
         '<button data-tab="users" class="admin-tab px-4 py-2 text-sm font-medium border-b-2 -mb-px ' +
         (tab === 'users' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700') + '">' +
         esc(I18n.t('tab_users')) + '</button>' +
-        (showVerify
-          ? '<button data-tab="verifications" class="admin-tab px-4 py-2 text-sm font-medium border-b-2 -mb-px ' +
-            (tab === 'verifications' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700') + '">' +
-            esc(I18n.t('tab_verifications')) + '</button>'
-          : '') +
         '<button data-tab="system" class="admin-tab px-4 py-2 text-sm font-medium border-b-2 -mb-px ' +
         (tab === 'system' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700') + '">' +
         esc(I18n.t('tab_system')) + '</button>' +
@@ -491,7 +356,6 @@ I18n.addStrings({
       });
       var mount = el.querySelector('#admin-mount');
       if (tab === 'users') paintUsers(el, mount);
-      else if (tab === 'verifications') paintVerifications(el, mount);
       else paintSystem(el, mount);
     }
 
