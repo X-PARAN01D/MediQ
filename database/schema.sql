@@ -50,6 +50,14 @@ CREATE TABLE IF NOT EXISTS users (
     facility_id       TEXT REFERENCES facilities(id) ON DELETE SET NULL,
     language_pref     TEXT NOT NULL DEFAULT 'mr' CHECK (language_pref IN ('mr','hi','en')),
     is_active         INTEGER NOT NULL DEFAULT 1,
+    -- Doctor / clinical staff verification (medical council licence check)
+    license_no        TEXT,
+    speciality        TEXT,
+    verification_status TEXT NOT NULL DEFAULT 'pending'
+                      CHECK (verification_status IN ('pending','verified','rejected')),
+    verified_by       TEXT REFERENCES users(id) ON DELETE SET NULL,
+    verified_at       TEXT,
+    verification_notes TEXT,
     -- OTP (demo / passwordless login for patients & field staff)
     otp_code          TEXT,
     otp_expires_at    TEXT,
@@ -70,6 +78,9 @@ CREATE TABLE IF NOT EXISTS patients (
     id                TEXT PRIMARY KEY,
     user_id           TEXT UNIQUE REFERENCES users(id) ON DELETE SET NULL,
     abha_id           TEXT UNIQUE,
+    -- ABHA (Ayushman Bharat Health Account) linking state
+    abha_link_status  TEXT NOT NULL DEFAULT 'unlinked'
+                      CHECK (abha_link_status IN ('unlinked','pending','linked')),
     name              TEXT NOT NULL,
     dob               TEXT,
     gender            TEXT CHECK (gender IN ('male','female','other')),
@@ -310,6 +321,9 @@ CREATE TABLE IF NOT EXISTS teleconsult_sessions (
     scheduled_at  TEXT NOT NULL,
     started_at    TEXT,
     ended_at      TEXT,
+    -- Call metadata: who consulted whom and for how long
+    duration_seconds INTEGER,
+    recording_ref TEXT,
     meeting_link  TEXT,
     notes         TEXT,
     created_at    TEXT NOT NULL,
@@ -372,3 +386,37 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC);
+
+-- ABHA link history: every link / unlink event for audit and traceability.
+CREATE TABLE IF NOT EXISTS abha_link_history (
+    id           TEXT PRIMARY KEY,
+    patient_id   TEXT NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+    abha_id      TEXT,
+    action       TEXT NOT NULL CHECK (action IN ('linked','unlinked')),
+    performed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_abha_history_patient ON abha_link_history(patient_id);
+
+-- Patient consent records (ABHA / ABDM style): who may access which data,
+-- for what purpose, and for how long. Enforced before cross-facility sharing.
+CREATE TABLE IF NOT EXISTS consents (
+    id               TEXT PRIMARY KEY,
+    patient_id       TEXT NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+    grantee          TEXT NOT NULL,
+    scope            TEXT NOT NULL DEFAULT 'read'
+                     CHECK (scope IN ('read','write','share')),
+    purpose          TEXT,
+    status           TEXT NOT NULL DEFAULT 'requested'
+                     CHECK (status IN ('requested','granted','revoked','expired')),
+    consent_token_ref TEXT,
+    valid_from       TEXT,
+    valid_to         TEXT,
+    created_by       TEXT REFERENCES users(id) ON DELETE SET NULL,
+    decided_by       TEXT REFERENCES users(id) ON DELETE SET NULL,
+    decided_at       TEXT,
+    created_at       TEXT NOT NULL,
+    updated_at       TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_consents_patient ON consents(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consents_status ON consents(status);

@@ -17,6 +17,8 @@ const TRANSITIONS = {
   cancelled: [],
 };
 
+const { ensureVerified } = require('./verificationService');
+
 function pagination(q) {
   const page = Number.isInteger(q.page) && q.page > 0 ? q.page : 1;
   const limit = Number.isInteger(q.limit) && q.limit > 0 ? Math.min(q.limit, 100) : 20;
@@ -83,6 +85,8 @@ function create(req) {
   if (!doctor || !['doctor', 'specialist'].includes(doctor.role)) {
     throw new AppError(400, 'doctor_id must belong to an active doctor or specialist');
   }
+  // Only licence-verified doctors may consult — this is how fake doctors are kept out.
+  ensureVerified(b.doctor_id);
 
   const facility = db.prepare('SELECT id FROM facilities WHERE id = ?').get(b.facility_id);
   if (!facility) throw new AppError(400, 'Facility not found');
@@ -155,6 +159,16 @@ function updateStatus(id, body) {
   if (nextStatus === 'completed') {
     sets.push('ended_at = ?');
     params.push(now);
+    // Call duration: who consulted whom, and for how long.
+    if (row.started_at) {
+      const seconds = Math.max(0, Math.round((new Date(now) - new Date(row.started_at)) / 1000));
+      sets.push('duration_seconds = ?');
+      params.push(seconds);
+    }
+  }
+  if (body.recording_ref !== undefined) {
+    sets.push('recording_ref = ?');
+    params.push(body.recording_ref === '' ? null : body.recording_ref);
   }
   if (body.notes !== undefined) {
     sets.push('notes = ?');
