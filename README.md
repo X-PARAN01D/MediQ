@@ -31,6 +31,11 @@ further restrict access.
 - **Emergency escalation** — pulsing SOS button → confirm → escalation timeline + tel:108
 - **Offline-first** — POST/PUT queue in localStorage, auto-sync on reconnect, backend `/api/sync` bulk upsert with conflict detection
 - **Multilingual** — English / Hindi / Marathi UI toggle (102 core keys × 3 languages)
+- **ABHA identity linking** — patient ABHA (Ayushman Bharat Health Account) lookup & link/unlink from the patient list; link history is audited
+- **Patient consent management** — request / grant / revoke / expire data-sharing consents per patient (read/write/share scopes), recorded per grantee
+- **Doctor licence verification** — doctors/specialists register with licence no. + speciality and start `pending`; facility/system admins approve or reject from the admin Verifications tab; unverified doctors cannot start teleconsultations
+- **Teleconsult duration** — call duration (mm:ss) computed from start/end timestamps and shown in the session list and room
+- **Admin staff onboarding** — admins create staff accounts per facility; a one-time temporary password is returned once by the API and must be changed on first login
 
 ## 3. Technology stack
 
@@ -192,6 +197,32 @@ frontend at `http://localhost:4000/api` to use the real backend instead of demo 
 Postgres + read replicas, Redis for queue/rate-limit, object storage for diagnostic reports,
 WebRTC for real teleconsult video, SMS gateway for OTP/notifications, FHIR export for
 ABDM (Ayushman Bharat Digital Mission) integration, analytics warehouse for state dashboards.
+
+---
+
+## 17. ABHA / ABDM integration
+
+`ABHA_PROVIDER` (default `mock`) selects the ABHA registry backend in `backend/src/services/abhaService.js`.
+
+- **mock** — built-in deterministic demo registry. Any phone number resolves to an ABHA ID of the form `ABHA-<digits>`. Link/unlink flows, link history (`abha_link_history`), and consent records all work end-to-end with zero credentials. **Do not use with real patient PII.**
+- **abdm** — real ABDM integration. Currently a **stub that returns HTTP 501** (`NOT_IMPLEMENTED`). It is not a live integration.
+
+Exact checklist to go live with ABDM:
+1. Register a Health Facility / HIP on the ABDM sandbox; obtain `clientId`/`clientSecret` → `ABDM_CLIENT_ID`, `ABDM_CLIENT_SECRET`, `ABDM_BASE_URL`.
+2. Implement session auth: `POST {ABDM_BASE_URL}/v0.5/sessions` → bearer token.
+3. Implement ABHA search/verify endpoints and map responses to the `linkConsent()` return shape.
+4. Implement consent-manager callbacks for the HIE-CM flow (consent request/on-fetch).
+5. Set `ABHA_PROVIDER=abdm` and restart.
+
+### Consent model
+Consents live in the `consents` table: one row per (patient, grantee, scope) with lifecycle
+`requested → granted → revoked`, plus automatic expiry via `valid_to`. Cross-facility health-record
+sharing must call `requireConsent()` before reading another facility's records.
+
+### Doctor licence verification
+Doctor/specialist accounts are created `pending` and cannot start teleconsultations until a
+facility_admin (same facility) or system_admin approves the licence in Admin → Verifications.
+Rejections are recorded with reviewer notes.
 
 ---
 
