@@ -49,21 +49,30 @@ function ensureSeeded() {
   const users = [
     { role: 'patient', name: 'Demo Patient', phone: '9000000001', facility_id: null },
     { role: 'asha_worker', name: 'Demo ASHA Worker', phone: '9000000002', facility_id: subCentre.id },
-    { role: 'doctor', name: 'Dr. Demo MO', phone: '9000000003', facility_id: phc.id },
-    { role: 'specialist', name: 'Dr. Demo Specialist', phone: '9000000004', facility_id: districtHospital.id },
+    { role: 'doctor', name: 'Dr. Demo MO', phone: '9000000003', facility_id: phc.id,
+      license_no: 'MH-MCI-2015-48210', speciality: 'General Medicine', verification_status: 'verified' },
+    { role: 'specialist', name: 'Dr. Demo Specialist', phone: '9000000004', facility_id: districtHospital.id,
+      license_no: 'MH-MCI-2012-30987', speciality: 'Pediatrics', verification_status: 'verified' },
     { role: 'lab_tech', name: 'Demo Lab Technician', phone: '9000000005', facility_id: ruralHospital.id },
     { role: 'pharmacist', name: 'Demo Pharmacist', phone: '9000000006', facility_id: phc.id },
     { role: 'facility_admin', name: 'Demo Facility Admin', phone: '9000000007', facility_id: phc.id },
     { role: 'system_admin', name: 'Demo System Admin', phone: '9000000008', facility_id: null },
   ];
   const insertUser = db.prepare(
-    `INSERT INTO users (id, role, name, phone, password_hash, facility_id, language_pref, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'mr', ?, ?)`
+    `INSERT INTO users (id, role, name, phone, password_hash, facility_id, language_pref,
+                        license_no, speciality, verification_status, verified_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'mr', ?, ?, ?, ?, ?, ?)`
   );
   const userIds = {};
   for (const u of users) {
     const id = crypto.randomUUID();
-    insertUser.run(id, u.role, u.name, u.phone, passwordHash, u.facility_id, now, now);
+    insertUser.run(
+      id, u.role, u.name, u.phone, passwordHash, u.facility_id,
+      u.license_no || null, u.speciality || null,
+      u.verification_status || (u.role === 'doctor' || u.role === 'specialist' ? 'pending' : 'verified'),
+      u.verification_status === 'verified' ? now : null,
+      now, now
+    );
     userIds[u.role] = id;
   }
 

@@ -154,4 +154,75 @@ function remove(id, user) {
   return { id, deleted: true };
 }
 
-module.exports = { list, getById, getOwn, create, update, remove };
+/**
+ * Link a patient record to an ABHA ID.
+ * - Looks the ABHA ID up via the configured ABHA provider (mock or ABDM).
+ * - Rejects duplicates across patients.
+ * - Records the event in abha_link_history for audit.
+ */
+async function linkAbha(id, { abha_id, phone }, req) {
+  const patient = getById(id, req.user); // also enforces patient-role access
+  if (patient.abha_link_status === 'linked' && patient.abha_id) {
+    throw new AppError(409, 'Patient is already linked to an ABHA ID');
+  }
+
+  const abhaService = require('./abhaService');
+  let record;
+  if (abha_id) {
+    record = await abhaService.lookup({ abha_id });
+  } else if (phone || patient.phone) {
+    record = await abhaService.lookup({ phone: phone || patient.phone });
+  } else {
+    throw new AppError(400, 'abha_id or phone is required for ABHA lookup');
+  }
+  if (!record || !record.abha_id) throw new AppError(404, 'No ABHA record found');
+
+  const dup = db.prepare('SELECT id FROM patients WHERE abha_id = ? AND id != ?').get(record.abha_id, id);
+  if (dup) throw new AppError(409, 'This ABHA ID is already linked to another patient');
+
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE patients SET abha_id = ?, abha_link_status = 'linked', updated_at = ? WHERE id = ?`
+  ).run(record.abha_id, now, id);
+  db.prepare(
+    `INSERT INTO abha_link_history (id, patient_id, abha_id, action, performed_by, created_at)
+     VALUES (?, ?, ?, 'linked', ?, ?)`
+  ).run(require('crypto').randomUUID(), id, record.abha_id, req.user.id, now);
+
+  const { audit } = require('../utils/audit');
+  audit(req, 'abha.linked', 'patients', id, { abha_id: record.abha_id, provider: record.provider });
+  return parsePatient(db.prepare('SELECT * FROM patients WHERE id = ?').get(id));
+}
+
+/** Unlink a patient's ABHA ID (keeps the local record; writes history). */
+function unlinkAbha(id, req) {
+  const patient = getById(id, req.user);
+  if (patient.abha_link_status !== 'linked' || !patient.abha_id) {
+    throw new AppError(409, 'Patient has no linked ABHA ID');
+  }
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE patients SET abha_id = NULL, abha_link_status = 'unlinked', updated_at = ? WHERE id = ?`
+  ).run(now, id);
+  db.prepare(
+    `INSERT INTO abha_link_history (id, patient_id, abha_id, action, performed_by, created_at)
+     VALUES (?, ?, ?, 'unlinked', ?, ?)`
+  ).run(require('crypto').randomUUID(), id, patient.abha_id, req.user.id, now);
+
+  const { audit } = require('../utils/audit');
+  audit(req, 'abha.unlinked', 'patients', id, { abha_id: patient.abha_id });
+  return parsePatient(db.prepare('SELECT * FROM patients WHERE id = ?').get(id));
+}
+
+function abhaHistory(id, user) {
+  getById(id, user); // 404 / access check
+  return db
+    .prepare(
+      `SELECT h.*, u.name AS performed_by_name FROM abha_link_history h
+       LEFT JOIN users u ON u.id = h.performed_by
+       WHERE h.patient_id = ? ORDER BY h.created_at DESC`
+    )
+    .all(id);
+}
+
+module.exports = { list, getById, getOwn, create, update, remove, linkAbha, unlinkAbha, abhaHistory };

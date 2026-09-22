@@ -40,6 +40,10 @@ app.use('/api/teleconsult', require('./routes/teleconsult'));
 app.use('/api/emergency', require('./routes/emergency'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/sync', require('./routes/sync'));
+app.use('/api/abha', require('./routes/abha'));
+app.use('/api/consents', require('./routes/consents'));
+app.use('/api/verifications', require('./routes/verifications'));
+app.use('/api/users', require('./routes/users'));
 
 app.use(notFound);
 app.use(errorHandler);

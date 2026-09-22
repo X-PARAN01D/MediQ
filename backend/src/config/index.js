@@ -37,4 +37,15 @@ module.exports = {
 
   meetBaseUrl: process.env.MEET_BASE_URL || 'https://meet.arogya.mh.gov.in',
   otpDemoCode: process.env.OTP_DEMO_CODE || '123456',
+
+  // ABHA (Ayushman Bharat Health Account) integration.
+  // provider: 'mock' serves a built-in demo ABHA registry (great for hackathons
+  // and offline demos). 'abdm' targets the real ABDM sandbox/production APIs —
+  // see README for the configuration checklist.
+  abha: {
+    provider: process.env.ABHA_PROVIDER || 'mock',
+    baseUrl: process.env.ABDM_BASE_URL || 'https://sandbox.abdm.gov.in',
+    clientId: process.env.ABDM_CLIENT_ID || '',
+    clientSecret: process.env.ABDM_CLIENT_SECRET || '',
+  },
 };
