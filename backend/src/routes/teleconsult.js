@@ -64,7 +64,6 @@ router.patch(
     param('id').isUUID(),
     body('status').isIn(['scheduled', 'ongoing', 'completed', 'cancelled']),
     body('notes').optional({ checkFalsy: true }).isString().trim().isLength({ max: 2000 }),
-    body('recording_ref').optional({ checkFalsy: true }).isString().trim().isLength({ max: 500 }),
   ],
   validate,
   controller.updateStatus

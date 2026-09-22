@@ -96,11 +96,6 @@
   <script src="js/components/forms.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
-  <!-- Views registry: must exist BEFORE any view script runs, because each
-       view assigns its renderer via `Views.<name> = ...` at load time.
-       (App core defines the rest of the globals and loads last.) -->
-  <script>window.Views = window.Views || {};</script>
-
   <!-- Views -->
   <script src="js/views/login.js"></script>
   <script src="js/views/dashboard.js"></script>

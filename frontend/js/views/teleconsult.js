@@ -35,10 +35,7 @@ I18n.addStrings({
     patient_panel: 'Patient',
     video_panel: 'Video',
     doctor_panel: 'Doctor',
-    consultation_saved: 'Consultation saved',
-    duration: 'Duration',
-    session_started: 'Started',
-    session_ended: 'Ended'
+    consultation_saved: 'Consultation saved'
   },
   hi: {
     tc_title: 'टेलीकंसल्टेशन',
@@ -73,10 +70,7 @@ I18n.addStrings({
     patient_panel: 'मरीज़',
     video_panel: 'वीडियो',
     doctor_panel: 'डॉक्टर',
-    consultation_saved: 'परामर्श सहेजा गया',
-    duration: 'अवधि',
-    session_started: 'प्रारंभ',
-    session_ended: 'समाप्त'
+    consultation_saved: 'परामर्श सहेजा गया'
   },
   mr: {
     tc_title: 'टेलीकन्सल्टेशन',
@@ -111,10 +105,7 @@ I18n.addStrings({
     patient_panel: 'रुग्ण',
     video_panel: 'व्हिडिओ',
     doctor_panel: 'डॉक्टर',
-    consultation_saved: 'सल्लामसलत जतन केली',
-    duration: 'कालावधी',
-    session_started: 'सुरू',
-    session_ended: 'समाप्त'
+    consultation_saved: 'सल्लामसलत जतन केली'
   }
 });
 
@@ -131,17 +122,6 @@ I18n.addStrings({
     if (!v) return '—';
     var d = new Date(v);
     return isNaN(d.getTime()) ? esc(v) : esc(d.toLocaleString());
-  }
-
-  function fmtDuration(totalSeconds) {
-    if (totalSeconds == null || isNaN(totalSeconds)) return '—';
-    totalSeconds = Math.max(0, Math.round(totalSeconds));
-    var h = Math.floor(totalSeconds / 3600);
-    var m = Math.floor((totalSeconds % 3600) / 60);
-    var s = totalSeconds % 60;
-    var mm = (h > 0 ? String(m) : m).padStart(2, '0');
-    var ss = String(s).padStart(2, '0');
-    return h > 0 ? h + ':' + mm + ':' + ss : m + ':' + ss;
   }
 
   var STATUS_TONE = {
@@ -259,10 +239,6 @@ I18n.addStrings({
           { key: 'patientName', label: I18n.t('patient') },
           { key: 'doctorName', label: I18n.t('doctor') },
           { key: 'scheduledAt', label: I18n.t('session_time'), render: function (r) { return fmtDT(r.scheduledAt); } },
-          {
-            key: 'duration', label: I18n.t('duration'),
-            render: function (r) { return fmtDuration(r.duration_seconds != null ? r.duration_seconds : (r.startedAt && r.endedAt ? Math.max(0, Math.round((new Date(r.endedAt) - new Date(r.startedAt)) / 1000)) : null)); }
-          },
           { key: 'status', label: I18n.t('status'), render: function (r) { return statusBadge(r.status); } },
           {
             key: 'assistedBy', label: I18n.t('assisted_by'),
@@ -366,11 +342,6 @@ I18n.addStrings({
       (session.assistedBy
         ? '<div><span class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">🤝 ' + esc(session.assistedBy) + '</span></div>'
         : '') +
-      '<div class="grid grid-cols-3 gap-2 pt-1 border-t border-gray-100">' +
-      '<div><p class="text-xs text-gray-500">' + esc(I18n.t('session_started')) + '</p><p class="font-medium text-xs">' + esc(session.startedAt ? new Date(session.startedAt).toLocaleTimeString() : '—') + '</p></div>' +
-      '<div><p class="text-xs text-gray-500">' + esc(I18n.t('session_ended')) + '</p><p class="font-medium text-xs">' + esc(session.endedAt ? new Date(session.endedAt).toLocaleTimeString() : '—') + '</p></div>' +
-      '<div><p class="text-xs text-gray-500">' + esc(I18n.t('duration')) + '</p><p class="font-medium text-xs">⏱ ' + esc(fmtDuration(session.duration_seconds)) + '</p></div>' +
-      '</div>' +
       '</div>';
 
     /* (b) Video area */

@@ -49,47 +49,7 @@ function initDatabase() {
 
   const schema = fs.readFileSync(findSchemaFile(), 'utf8');
   db.exec(schema);
-  runMigrations(db);
   return db;
-}
-
-/**
- * Idempotent column migrations for databases created before a schema change.
- * CREATE TABLE IF NOT EXISTS covers new tables; this covers new columns on
- * existing tables.
- */
-function runMigrations(db) {
-  const existingColumns = (table) =>
-    new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name));
-
-  const addColumnIfMissing = (table, column, ddl) => {
-    if (!existingColumns(table).has(column)) {
-      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
-    }
-  };
-
-  // Doctor verification fields
-  addColumnIfMissing('users', 'license_no', 'TEXT');
-  addColumnIfMissing('users', 'speciality', 'TEXT');
-  addColumnIfMissing(
-    'users',
-    'verification_status',
-    `TEXT NOT NULL DEFAULT 'pending' CHECK (verification_status IN ('pending','verified','rejected'))`
-  );
-  addColumnIfMissing('users', 'verified_by', 'TEXT REFERENCES users(id) ON DELETE SET NULL');
-  addColumnIfMissing('users', 'verified_at', 'TEXT');
-  addColumnIfMissing('users', 'verification_notes', 'TEXT');
-
-  // ABHA link state on patients
-  addColumnIfMissing(
-    'patients',
-    'abha_link_status',
-    `TEXT NOT NULL DEFAULT 'unlinked' CHECK (abha_link_status IN ('unlinked','pending','linked'))`
-  );
-
-  // Teleconsult call metadata
-  addColumnIfMissing('teleconsult_sessions', 'duration_seconds', 'INTEGER');
-  addColumnIfMissing('teleconsult_sessions', 'recording_ref', 'TEXT');
 }
 
 function getDb() {
